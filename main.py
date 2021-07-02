@@ -1,5 +1,7 @@
 import sqlite3
 from telethon import TelegramClient, events
+from telethon.sync import TelegramClient
+from telethon.tl.types.messages import ChatsSlice
 from  data import api_id, api_hash, api_client, channels
 
 #Создание базы данных
@@ -41,5 +43,7 @@ async def event_handler(event):
        chat = await event.get_input_chat() #Данные канала из которого пришло сообщение
        msg = await client.get_messages(chat.channel_id, limit=1) #Последние сообщение
        await client.forward_messages(api_client, msg)  #Отправка сообщения на свой канал
+    async for message in client.iter_messages(chat, reverse=True):
+        print(message.text)
 
 client.run_until_disconnected()
