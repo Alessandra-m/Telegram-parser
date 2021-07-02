@@ -5,30 +5,20 @@ from telethon.tl.types.messages import ChatsSlice
 from  data import api_id, api_hash, api_client, channels
 
 #Создание базы данных
-database = 'database.sqilte'
+conn = sqlite3.connect('database.db')
 
-def create_connect():
-    return sqlite3.connect(database)
+cur = conn.cursor()  
 
-def init_db():
-    with create_connect() as connect:
-        connect.execute("""CREATE TABLE IF NOT EXISTS database(
-            id INTEGER PRIMARY KEY,
-            user_id INTEGER NOT NULL,
-            text TEXT NOT NULL,
-            price INTEGER,
-            URL TEXT);
-            """)
-        connect.commit()
+cur.execute("""CREATE TABLE IF NOT EXISTS database(
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    text TEXT NOT NULL,
+    price INTEGER,
+    URL TEXT);
+    """)
 
-def add_message(user_id, message):
-    with create_connect() as connect:
-        connect.execute(
-            'INSERT INTO Message (user_id, text) VALUES (?, ?)', (user_id, message)
-        )
-        connect.commit()
+conn.commit()
 
-init_db()
 
 #Создание клиента
 client = TelegramClient('Me', api_id, api_hash)
@@ -43,7 +33,10 @@ async def event_handler(event):
        chat = await event.get_input_chat() #Данные канала из которого пришло сообщение
        msg = await client.get_messages(chat.channel_id, limit=1) #Последние сообщение
        await client.forward_messages(api_client, msg)  #Отправка сообщения на свой канал
+    
     async for message in client.iter_messages(chat, reverse=True):
-        print(message.text)
+        text = message.text
+        user_id = message.id
+    cur.execute('INSERT INTO Message (user_id, text) VALUES (?, ?)', (user_id, text))
 
 client.run_until_disconnected()
