@@ -11,8 +11,8 @@ cur = conn.cursor()
 
 cur.execute("""CREATE TABLE IF NOT EXISTS database(
     id INTEGER PRIMARY KEY,
-    user_id INTEGER NOT NULL,
-    text TEXT NOT NULL,
+    user_id INTEGER,
+    text TEXT,
     price INTEGER,
     URL TEXT);
     """)
@@ -37,6 +37,7 @@ async def event_handler(event):
     async for message in client.iter_messages(chat, reverse=True):
         text = message.text
         user_id = message.id
-    cur.execute('INSERT INTO Message (user_id, text) VALUES (?, ?)', (user_id, text))
+    cur.execute('INSERT INTO database (user_id, text) VALUES (?, ?)', (user_id, text))
+    conn.commit()
 
 client.run_until_disconnected()
