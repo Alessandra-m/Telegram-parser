@@ -5,19 +5,20 @@ from telethon.tl.types.messages import ChatsSlice
 from  data import api_id, api_hash, api_client, channels
 
 #Создание базы данных
-conn = sqlite3.connect('database.db')
+connection = sqlite3.connect('database.db')
 
-cur = conn.cursor()  
+cursor = connection.cursor()  
 
-cur.execute("""CREATE TABLE IF NOT EXISTS database(
+cursor.execute("""CREATE TABLE IF NOT EXISTS database(
     id INTEGER PRIMARY KEY,
     user_id INTEGER,
     text TEXT,
+    date DATE,
     price INTEGER,
     URL TEXT);
     """)
 
-conn.commit()
+connection.commit()
 
 
 #Создание клиента
@@ -34,10 +35,14 @@ async def event_handler(event):
        msg = await client.get_messages(chat.channel_id, limit=1) #Последние сообщение
        await client.forward_messages(api_client, msg)  #Отправка сообщения на свой канал
     
+    #Вывод сообщений в базу данный
+    cursor.execute('DELETE FROM database')
     async for message in client.iter_messages(chat, reverse=True):
         text = message.text
         user_id = message.id
-    cur.execute('INSERT INTO database (user_id, text) VALUES (?, ?)', (user_id, text))
-    conn.commit()
+        date = message.date
+        cursor.execute('INSERT INTO database (user_id, text, date) VALUES (?, ?, ?)', (user_id, text, date))
+    connection.commit()
 
 client.run_until_disconnected()
+
