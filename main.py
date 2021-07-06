@@ -15,7 +15,7 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS database(
     user_id INTEGER,
     text TEXT,
     date DATE,
-    price INTEGER,
+    price TEXT,
     URL TEXT,
     sharp TEXT);
     """)
@@ -38,17 +38,69 @@ async def event_handler(event):
 
     #Вывод сообщений в базу данный
     cursor.execute('DELETE FROM database')
+
     async for message in client.iter_messages(chat, reverse = True):
+
         text = message.text
         user_id = message.id
         date = message.date
+
         hashtag = str()
-        tags = re.findall(r'(#\w+)', str(text))
+        text_str = str(text)
+        tags = re.findall(r'(#\w+)', text_str)
         for i in range(0,len(tags)):
             hashtag = hashtag + tags[i] + ' '
-        #result = re.split(r"\s+", str(text))
-        cursor.execute('INSERT INTO database (user_id, text, date, sharp) VALUES (?, ?, ?, ?)', (user_id, text, date, hashtag))
-    connection.commit()
+
+        
+        price = str()
+        text_str = text_str.lower()
+
+        if re.findall(r'(цена+[ :-]+\d+)', text_str) != []:
+            price = re.findall(r'(цена+[ :-]+\d+)', text_str)
+
+        elif re.findall(r'(\d+[ ]+[₽])', text_str) != []:
+            price = re.findall(r'(\d+[ ]+[₽])', text_str)
+        
+        elif re.findall(r'(\d+[₽])', text_str) != []:
+            price = re.findall(r'(\d+[₽])', text_str)
+
+        elif  re.findall(r'(\d+[ ]+[РртТ])', text_str) != []:
+            price = re.findall(r'(\d+[ ]+[РртТ])', text_str)
+
+        elif re.findall(r'(\d+[РртТ])', text_str) != []:
+            price = re.findall(r'(\d+Р[ртТ])', text_str)
+
+        elif  re.findall(r'(\d+[ ]+[т]+[ы])', text_str) != []:
+            price = re.findall(r'(\d+[ ]+[т]+[ы]+[c])', text_str)
+
+        elif re.findall(r'(\d+[т]+[ы])', text_str) != []:
+            price = re.findall(r'(\d+[т]+[ы]+[c])', text_str)
+        
+        elif  re.findall(r'(\d+[ ]+[кk]+[ .])', text_str) != []:
+            price = re.findall(r'(\d+[ ]+[кk]+[ .])', text_str)
+
+        elif re.findall(r'(\d+[кk]+[ .])', text_str) != []:
+            price = re.findall(r'(\d+[кk]+[ .])', text_str)
+        
+        elif  re.findall(r'(\d+[ ]+[т]+[р])', text_str) != []:
+            price = re.findall(r'(\d+[ ]+[т]+[р])', text_str)
+
+        elif re.findall(r'(\d+[т]+[р])', text_str) != []:
+            price = re.findall(r'(\d+[т]+[р])', text_str)
+
+        res_price = str()
+        res_p = str()
+        for i in range(0,len(price)):
+            res_price = str(res_price + price[i] + ' ')
+        res_price = re.findall(r'(\d+)',res_price)
+        for i in range(0,len(res_price)):
+            res_p = str(res_p + res_price[i] + ' ')
+
+
+        cursor.execute('INSERT INTO database (user_id, text, date, sharp, price) VALUES (?, ?, ?, ?, ?)', (user_id, text, date, hashtag, res_p))
+        connection.commit()
+        
+    
 
 
 
