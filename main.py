@@ -22,9 +22,9 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS database(
     """)
 connection.commit()
 
+#Дата получения сообщений
 date = datetime.datetime.today()
 last_date = date - datetime.timedelta(days = 180)
-    
 
 #Создание клиента
 client = TelegramClient('Me', api_id, api_hash)
@@ -44,7 +44,7 @@ async def event_handler(event):
     #Вывод сообщений в базу данный
     cursor.execute('DELETE FROM database')
 
-    async for message in client.iter_messages(chat, reverse = True):
+    async for message in client.iter_messages(chat, reverse = True, offset_date = last_date):
         text = message.text
         user_id = message.id
         date_1 = message.date
@@ -61,35 +61,30 @@ async def event_handler(event):
         if re.findall(r'(цена+[ :-]+\d+)', text_str) != []:
             price = re.findall(r'(цена+[ :-]+\d+)', text_str)
 
-        elif  re.findall(r'(\d+[ ]+[₽рт])', text_str) != []:
-            price = re.findall(r'(\d+[ ]+[₽рт])', text_str)
-
-        elif re.findall(r'(\d+[₽рт])', text_str) != []:
-            price = re.findall(r'(\d+[₽рт])', text_str)
-
         elif  re.findall(r'(\d+[ ]+[т]+[ы]+[c])', text_str) != []:
             price = re.findall(r'(\d+[ ]+[т]+[ы]+[c])', text_str)
 
         elif re.findall(r'(\d+[т]+[ы]+[c])', text_str) != []:
             price = re.findall(r'(\d+[т]+[ы]+[c])', text_str)
+
+        elif  re.findall(r'(\d+[ ]+[р]+[у]+[б])', text_str) != []:
+            price = re.findall(r'(\d+[ ]+[р]+[у]+[б])', text_str)
         
-        elif  re.findall(r'(\d+[ ]+[кk]+[ .])', text_str) != []:
-            price = re.findall(r'(\d+[ ]+[кk]+[ .])', text_str)
+        elif  re.findall(r'(\d+[р]+[у]+[б])', text_str) != []:
+            price = re.findall(r'(\d+[р]+[у]+[б])', text_str)
 
-        elif re.findall(r'(\d+[кk]+[ .])', text_str) != []:
-            price = re.findall(r'(\d+[кk]+[ .])', text_str)
+        elif  re.findall(r'(\d+[ ]+[₽рт])', text_str) != []:
+            price = re.findall(r'(\d+[ ]+[₽рт])', text_str)
 
-        elif re.findall(r'(\d+[кk]+\Z)', text_str) != []:
-            price = re.findall(r'(\d+[кk]+\Z)', text_str)
-
-        elif re.findall(r'(\d+[ ]+[кk]+\Z)', text_str) != []:
-            price = re.findall(r'(\d+[ ]+[кk]+\Z)', text_str)
+        elif re.findall(r'(\d+[₽рт])', text_str) != []:
+            price = re.findall(r'(\d+[₽рт])', text_str)
         
-        elif  re.findall(r'(\d+[ ]+[т]+[р])', text_str) != []:
-            price = re.findall(r'(\d+[ ]+[т]+[р])', text_str)
+        elif  re.findall(r'(\d+[ ]+[кk]+\Z|[ .])', text_str) != []:
+            price = re.findall(r'(\d+[ ]+[кk]+\Z|[ .])', text_str)
 
-        elif re.findall(r'(\d+[т]+[р])', text_str) != []:
-            price = re.findall(r'(\d+[т]+[р])', text_str)
+        elif re.findall(r'(\d+[кk]+\Z|[ .])', text_str) != []:
+            price = re.findall(r'(\d+[кk]+\Z|[ .])', text_str)
+        
 
         res_price = str()
         res_p = str()
