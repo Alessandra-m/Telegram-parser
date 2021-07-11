@@ -24,8 +24,8 @@ class DB:
             """)
         self.conn.commit()
 
-    def insert_data(self, user_id, text_msg, date_1, hashtag, res_p):
-        self.c.execute('INSERT INTO database (ID, text_msg, date, hash, price) VALUES (?, ?, ?, ?, ?)', (user_id, text_msg, date_1, hashtag, res_p))
+    def insert_data(self, user_id, text_msg, date_1, hash, res_p):
+        self.c.execute('INSERT INTO database (ID, text_msg, date, hash, price) VALUES (?, ?, ?, ?, ?)', (user_id, text_msg, date_1, hash, res_p))
         self.conn.commit()
 
     def delete_data(self):
@@ -55,11 +55,11 @@ async def event_handler(event):
         user_id = message.id
         date_1 = message.date
 
-        hashtag = str()
+        hash = str()
         text_str = str(text_msg)
         tags = re.findall(r'(#\w+)', text_str)
         for i in range(0,len(tags)):
-            hashtag = hashtag + tags[i] + ' '
+            hash = hash + tags[i] + ' '
 
         price = str()
         text_str = text_str.lower()
@@ -104,7 +104,7 @@ async def event_handler(event):
             res_p = res_p + '₽'
         res_p = re.sub(r'\s+', '', res_p)
 
-        db.insert_data(user_id, text_msg, date_1, hashtag, res_p)
+        db.insert_data(user_id, text_msg, date_1, hash, res_p)
 
 
 class Main(tk.Frame):
@@ -140,11 +140,11 @@ class Main(tk.Frame):
         self.tree.heading('text_msg', text='Сообщение')
         self.tree.heading('date', text='Дата')
         self.tree.heading('price', text='Цена')
-        self.tree.heading('hash', text='Хэсштэг')
+        self.tree.heading('hash', text='Хэштэг')
         self.tree.pack()
 
-    def records(self, user_id, text_msg, date_1, hashtag, res_p):
-        self.db.insert_data(user_id, text_msg, date_1, hashtag, res_p)
+    def records(self, user_id, text_msg, date_1, hash, res_p):
+        self.db.insert_data(user_id, text_msg, date_1, hash, res_p)
         self.view_records()
 
     def view_records(self):
@@ -153,13 +153,21 @@ class Main(tk.Frame):
         [self.tree.delete(i) for i in self.tree.get_children()]
         [self.tree.insert('', 'end', values=row) for row in self.db.c.fetchall()]
 
-    def search_records(self, text_msg, price, hash):
+    def search_text_msg(self, text_msg):
         text_msg = ('%' + text_msg + '%',)
-        price = ('%' + price + '%',)
-        hash = ('%' + hash + '%',)
         self.db.c.execute('''SELECT * FROM database WHERE text_msg LIKE ?''', text_msg)
+        [self.tree.delete(i) for i in self.tree.get_children()]
+        [self.tree.insert('', 'end', values=row) for row in self.db.c.fetchall()]
+
+    def search_hash(self, hash):
+        hash = ('%' + hash + '%',)
         self.db.c.execute('''SELECT * FROM database WHERE hash LIKE ?''', hash)
-        self.db.c.execute('''SELECT * FROM database WHERE price LIKE ?''', price)
+        [self.tree.delete(i) for i in self.tree.get_children()]
+        [self.tree.insert('', 'end', values=row) for row in self.db.c.fetchall()]
+
+    def search_price(self,  res_p):
+        res_p = ('%' + res_p + '%',)
+        self.db.c.execute('''SELECT * FROM database WHERE price LIKE ?''', res_p)
         [self.tree.delete(i) for i in self.tree.get_children()]
         [self.tree.insert('', 'end', values=row) for row in self.db.c.fetchall()]
 
@@ -168,7 +176,6 @@ class Main(tk.Frame):
 
     def open_search_dialog(self):
         Search()
-
 
 class Child(tk.Toplevel):
     def __init__(self):
@@ -189,14 +196,11 @@ class Child(tk.Toplevel):
 
         self.entry_text_msg = ttk.Entry(self)
         self.entry_text_msg.place(x=200, y=50)
-
         self.entry_money = ttk.Entry(self)
         self.entry_money.place(x=200, y=110)
 
-
         self.grab_set()
         self.focus_set()
-
 
 class Search(tk.Toplevel):
     def __init__(self):
@@ -206,21 +210,33 @@ class Search(tk.Toplevel):
 
     def init_search(self):
         self.title('Поиск')
-        self.geometry('300x100+400+300')
+        self.geometry('300x170+400+300')
         self.resizable(False, False)
 
-        label_search = tk.Label(self, text='Поиск')
-        label_search.place(x=50, y=20)
+        btn_search = ttk.Button(self, text='Поиск')
+        btn_search.place(x=105, y=120)
+        btn_cancel = ttk.Button(self, text='Закрыть', command=self.destroy)
+        btn_cancel.place(x=185, y=120)
 
+        label_search = tk.Label(self, text='Сообщение')
+        label_search.place(x=30, y=20)
         self.entry_search = ttk.Entry(self)
         self.entry_search.place(x=105, y=20, width=150)
+        btn_search.bind('<Button-1>', lambda event: self.view.search_text_msg(self.entry_search.get()))
+        btn_search.bind('<Button-1>', lambda event: self.destroy(), add='+')
 
-        btn_cancel = ttk.Button(self, text='Закрыть', command=self.destroy)
-        btn_cancel.place(x=185, y=50)
+        label_search = tk.Label(self, text='Хэштэг')
+        label_search.place(x=30, y=50)
+        self.entry_search = ttk.Entry(self)
+        self.entry_search.place(x=105, y=50, width=150)
+        btn_search.bind('<Button-1>', lambda event: self.view.search_hash(self.entry_search.get()))
+        btn_search.bind('<Button-1>', lambda event: self.destroy(), add='+')
 
-        btn_search = ttk.Button(self, text='Поиск')
-        btn_search.place(x=105, y=50)
-        btn_search.bind('<Button-1>', lambda event: self.view.search_records(self.entry_search.get()))
+        label_search = tk.Label(self, text='Цены')
+        label_search.place(x=30, y=80)
+        self.entry_search = ttk.Entry(self)
+        self.entry_search.place(x=105, y=80, width=150)
+        btn_search.bind('<Button-1>', lambda event: self.view.search_price(self.entry_search.get()))
         btn_search.bind('<Button-1>', lambda event: self.destroy(), add='+')
 
 if __name__ == "__main__":
@@ -228,7 +244,7 @@ if __name__ == "__main__":
     db = DB()
     app = Main(root)
     app.pack()
-    root.title("Household database")
+    root.title("Database")
     root.geometry("750x450+300+300")
     root.resizable(False, False)
     root.mainloop()
