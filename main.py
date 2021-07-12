@@ -37,7 +37,7 @@ class DB:
 db = DB()
 
 date = datetime.datetime.today()
-last_date = date - datetime.timedelta(days = 5)
+last_date = date - datetime.timedelta(days = 180)
 
 client = TelegramClient('Me', api_id, api_hash)
 client.start()
