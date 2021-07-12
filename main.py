@@ -20,12 +20,14 @@ class DB:
             text_msg TEXT,
             date DATE,
             price TEXT,
-            hash TEXT);
+            hashtag TEXT,
+            URL TEXT);
             """)
         self.conn.commit()
 
-    def insert_data(self, user_id, text_msg, date_1, hash, res_p):
-        self.c.execute('INSERT INTO database (ID, text_msg, date, hash, price) VALUES (?, ?, ?, ?, ?)', (user_id, text_msg, date_1, hash, res_p))
+    def insert_data(self, user_id, text_msg, res_p, date_1, hash,  URL):
+        self.c.execute('INSERT INTO database (ID, text_msg, price, date, hashtag, URL) VALUES (?, ?, ?, ?, ?, ?)', 
+        (user_id, text_msg, res_p, date_1,  hash,  URL))
         self.conn.commit()
 
     def delete_data(self):
@@ -35,7 +37,7 @@ class DB:
 db = DB()
 
 date = datetime.datetime.today()
-last_date = date - datetime.timedelta(days = 180)
+last_date = date - datetime.timedelta(days = 5)
 
 client = TelegramClient('Me', api_id, api_hash)
 client.start()
@@ -54,6 +56,9 @@ async def event_handler(event):
         text_msg = message.text
         user_id = message.id
         date_1 = message.date
+        id_URL = str(user_id)
+        URL = 'https://t.me/parser_test1/'+ id_URL
+        # URL = 'https://t.me/EUC_market/'+ id_URL
 
         hash = str()
         text_str = str(text_msg)
@@ -104,7 +109,7 @@ async def event_handler(event):
             res_p = res_p + '₽'
         res_p = re.sub(r'\s+', '', res_p)
 
-        db.insert_data(user_id, text_msg, date_1, hash, res_p)
+        db.insert_data(user_id, text_msg, res_p, date_1, hash,  URL)
 
 class Main(tk.Frame):
     def __init__(self, root):
@@ -130,10 +135,10 @@ class Main(tk.Frame):
         self.tree = ttk.Treeview(self, columns=('ID', 'text_msg', 'date', 'price', 'hash'), height=15, show='headings')
 
         self.tree.column('ID', width=30, anchor=tk.CENTER)
-        self.tree.column('text_msg', width=365, anchor=tk.CENTER)
+        self.tree.column('text_msg', width=400, anchor=tk.CENTER)
         self.tree.column('date', width=150, anchor=tk.CENTER)
-        self.tree.column('price', width=100, anchor=tk.CENTER)
-        self.tree.column('hash', width=100, anchor=tk.CENTER)
+        self.tree.column('price', width=70, anchor=tk.CENTER)
+        self.tree.column('hash', width=180, anchor=tk.CENTER)
 
         self.tree.heading('ID', text='ID')
         self.tree.heading('text_msg', text='Сообщение')
@@ -315,7 +320,7 @@ if __name__ == "__main__":
     app = Main(root)
     app.pack()
     root.title("Database")
-    root.geometry("750x450+300+300")
+    root.geometry("880x450+300+300")
     root.resizable(False, False)
     root.mainloop()
 
