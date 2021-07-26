@@ -16,7 +16,7 @@ class DB:
         self.conn = sqlite3.connect('database.db')
         self.c = self.conn.cursor()
         self.c.execute("""CREATE TABLE IF NOT EXISTS database(
-            ID INTEGER,
+            num integer primary key,
             text_msg TEXT,
             date DATE,
             price TEXT,
@@ -25,9 +25,9 @@ class DB:
             """)
         self.conn.commit()
 
-    def insert_data(self, user_id, text_msg, res_p, date_1, hash,  URL):
-        self.c.execute('INSERT INTO database (ID, text_msg, price, date, hashtag, URL) VALUES (?, ?, ?, ?, ?, ?)', 
-        (user_id, text_msg, res_p, date_1,  hash,  URL))
+    def insert_data(self, text_msg, res_p, date_1, hash,  URL):
+        self.c.execute('INSERT INTO database (text_msg, price, date, hashtag, URL) VALUES (?, ?, ?, ?, ?)', 
+        (text_msg, res_p, date_1,  hash,  URL))
         self.conn.commit()
 
     def delete_data(self):
@@ -38,6 +38,7 @@ db = DB()
 
 date = datetime.datetime.today()
 last_date = date - datetime.timedelta(days = 180)
+
 
 client = TelegramClient('Me', api_id, api_hash)
 client.start()
@@ -51,8 +52,11 @@ async def event_handler(event):
        await client.forward_messages(api_client, msg) 
     
     db.delete_data()
-
+    
+    k=0
     async for message in client.iter_messages(chat, reverse = True, offset_date = last_date):
+        k=k+1
+
         text_msg = message.text
         user_id = message.id
         date_1 = message.date
@@ -108,8 +112,11 @@ async def event_handler(event):
         if len(res_p) > 0:
             res_p = res_p + '₽'
         res_p = re.sub(r'\s+', '', res_p)
+        if text_msg != '':
+            db.insert_data(text_msg, res_p, date_1, hash,  URL)
 
-        db.insert_data(user_id, text_msg, res_p, date_1, hash,  URL)
+
+        
 
 class Main(tk.Frame):
     def __init__(self, root):
@@ -147,8 +154,8 @@ class Main(tk.Frame):
         self.tree.heading('hash', text='Хэштэг')
         self.tree.pack()
 
-    def records(self, user_id, text_msg, date_1, hash, res_p):
-        self.db.insert_data(user_id, text_msg, date_1, hash, res_p)
+    def records(self, text_msg, date_1, hash, res_p):
+        self.db.insert_data(text_msg, date_1, hash, res_p)
         self.view_records()
 
     def view_records(self):
